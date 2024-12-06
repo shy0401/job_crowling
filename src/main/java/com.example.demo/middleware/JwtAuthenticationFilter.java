@@ -31,12 +31,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             String authHeader = request.getHeader("Authorization");
 
-            // Check if the Authorization header contains a Bearer token
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
                 String token = authHeader.substring(7);
                 String username = jwtUtils.extractUsername(token);
 
-                // Authenticate only if username is valid and no authentication exists in the SecurityContext
                 if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                     UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
@@ -46,16 +44,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                         SecurityContextHolder.getContext().setAuthentication(authToken);
                     }
+
                 }
             }
 
-            // Continue the filter chain
             filterChain.doFilter(request, response);
         } catch (Exception ex) {
-            // Log any exceptions for debugging
-            ex.printStackTrace();
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("Unauthorized: " + ex.getMessage());
+            response.setContentType("application/json");
+            response.getWriter().write("{\"error\": \"Unauthorized\", \"message\": \"" + ex.getMessage() + "\"}");
         }
     }
 }
