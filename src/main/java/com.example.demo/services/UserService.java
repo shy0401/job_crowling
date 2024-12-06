@@ -5,17 +5,22 @@ import com.example.demo.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
 @Service
+@Transactional
 public class UserService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    private PasswordEncoder passwordEncoder;
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     /**
      * 사용자 ID를 기반으로 사용자 정보를 조회합니다.
@@ -25,13 +30,8 @@ public class UserService {
      * @throws IllegalArgumentException 사용자 정보를 찾을 수 없을 때
      */
     public User getUserProfile(Long userId) {
-        Optional<User> user = userRepository.findById(userId);
-
-        if (user.isPresent()) {
-            return user.get();
-        } else {
-            throw new IllegalArgumentException("User not found.");
-        }
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found."));
     }
 
     /**
@@ -54,5 +54,21 @@ public class UserService {
 
         // 사용자 저장
         userRepository.save(user);
+    }
+
+    /**
+     * 로그인 시 이메일과 비밀번호를 확인하는 메서드
+     *
+     * @param email       사용자의 이메일
+     * @param rawPassword 사용자가 입력한 비밀번호
+     * @return 인증 성공 여부
+     */
+    public boolean validateUser(String email, String rawPassword) {
+        Optional<User> optionalUser = userRepository.findByEmail(email);
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+            return passwordEncoder.matches(rawPassword, user.getPassword());
+        }
+        return false;
     }
 }

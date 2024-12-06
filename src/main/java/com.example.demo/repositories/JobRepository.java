@@ -30,4 +30,6 @@ public interface JobRepository extends JpaRepository<Job, Long> {
      */
     @Query("SELECT j FROM Job j ORDER BY j.salary DESC")
     List<Job> findJobsBySalaryDescending();
+
+    boolean existsByTitleAndLocation(String title, String location);
 }

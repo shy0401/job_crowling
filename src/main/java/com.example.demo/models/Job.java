@@ -1,24 +1,23 @@
 package com.example.demo.models;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 
 @Entity
-@Table(name = "jobs")
 public class Job {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String company;
     private String title;
-    private String link;
+    private String description;
     private String location;
     private String experience;
-    private String education;
-    private String employmentType;
-    private String deadline;
-    private String sector;
-    private String salary;
+    private String company;
+    private double salary;
 
     // Getters and Setters
     public Long getId() {
@@ -29,14 +28,6 @@ public class Job {
         this.id = id;
     }
 
-    public String getCompany() {
-        return company;
-    }
-
-    public void setCompany(String company) {
-        this.company = company;
-    }
-
     public String getTitle() {
         return title;
     }
@@ -45,12 +36,12 @@ public class Job {
         this.title = title;
     }
 
-    public String getLink() {
-        return link;
+    public String getDescription() {
+        return description;
     }
 
-    public void setLink(String link) {
-        this.link = link;
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public String getLocation() {
@@ -69,43 +60,19 @@ public class Job {
         this.experience = experience;
     }
 
-    public String getEducation() {
-        return education;
+    public String getCompany() {
+        return company;
     }
 
-    public void setEducation(String education) {
-        this.education = education;
+    public void setCompany(String company) {
+        this.company = company;
     }
 
-    public String getEmploymentType() {
-        return employmentType;
-    }
-
-    public void setEmploymentType(String employmentType) {
-        this.employmentType = employmentType;
-    }
-
-    public String getDeadline() {
-        return deadline;
-    }
-
-    public void setDeadline(String deadline) {
-        this.deadline = deadline;
-    }
-
-    public String getSector() {
-        return sector;
-    }
-
-    public void setSector(String sector) {
-        this.sector = sector;
-    }
-
-    public String getSalary() {
+    public double getSalary() {
         return salary;
     }
 
-    public void setSalary(String salary) {
+    public void setSalary(double salary) {
         this.salary = salary;
     }
 }

@@ -1,8 +1,9 @@
 package com.example.demo.controller;
 
 import com.example.demo.services.UserService;
-import com.example.demo.utils.ValidationUtils;
+import com.example.demo.utils.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,30 +13,38 @@ import java.util.Map;
 @RequestMapping("/auth")
 public class AuthController {
 
+    private final UserService userService;
+    private final JwtUtils jwtUtils;
+
     @Autowired
-    private UserService userService;
+    public AuthController(UserService userService, JwtUtils jwtUtils) {
+        this.userService = userService;
+        this.jwtUtils = jwtUtils;
+    }
 
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody Map<String, String> request) {
         String email = request.get("email");
         String password = request.get("password");
 
-        // 입력 검증
-        if (!ValidationUtils.isValidEmail(email)) {
-            return ResponseEntity.badRequest().body("Invalid email format.");
-        }
-
-        if (!ValidationUtils.isValidPassword(password)) {
-            return ResponseEntity.badRequest().body("Password must be at least 8 characters long and include a special character.");
-        }
-
         try {
             userService.registerUser(email, password);
             return ResponseEntity.ok("User registered successfully.");
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body("An error occurred: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> loginUser(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        String password = request.get("password");
+
+        if (userService.validateUser(email, password)) {
+            String token = jwtUtils.generateToken(email);
+            return ResponseEntity.ok(Map.of("token", token));
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid email or password.");
         }
     }
 }
