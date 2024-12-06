@@ -1,0 +1,12 @@
+/target
+/.idea
+*.iml
+*.log
+*.class
+*.jar
+*.war
+*.zip
+/.mvn
+/.vscode
+spring.log
+.env
