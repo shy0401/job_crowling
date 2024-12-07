@@ -3,6 +3,9 @@ package com.example.demo.models;
 import jakarta.persistence.*;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(name = "users")
 public class User {
@@ -17,6 +20,14 @@ public class User {
     @Column(nullable = false)
     private String password;
 
+    @Column(nullable = false)
+    private String name;
+
+    // 사용자와 연관된 지원 내역
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Application> applications = new ArrayList<>();
+
+    // Getter & Setter
     public Long getId() {
         return id;
     }
@@ -37,7 +48,23 @@ public class User {
         this.password = password;
     }
 
-    // 추가 메서드: 비밀번호 일치 여부 확인
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public List<Application> getApplications() {
+        return applications;
+    }
+
+    public void setApplications(List<Application> applications) {
+        this.applications = applications;
+    }
+
+    // 비밀번호 검증
     public boolean checkPassword(String rawPassword, BCryptPasswordEncoder encoder) {
         return encoder.matches(rawPassword, this.password);
     }

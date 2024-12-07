@@ -1,6 +1,7 @@
 package com.example.demo.models;
 
 import jakarta.persistence.*;
+import java.util.Date;
 
 @Entity
 @Table(name = "applications")
@@ -10,42 +11,39 @@ public class Application {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private String jobId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "job_posting_id", nullable = false)
+    private JobPosting jobPosting;
 
     @Column(nullable = false)
-    private String userEmail;
+    private String status = "지원 완료";
 
-    @Column(nullable = true)
-    private String status;
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date appliedAt = new Date();
 
-    // 기본 생성자
-    public Application() {
-    }
-
-    // Getter와 Setter
+    // Getter & Setter
     public Long getId() {
         return id;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public User getUser() {
+        return user;
     }
 
-    public String getJobId() {
-        return jobId;
+    public void setUser(User user) {
+        this.user = user;
     }
 
-    public void setJobId(String jobId) {
-        this.jobId = jobId;
+    public JobPosting getJobPosting() {
+        return jobPosting;
     }
 
-    public String getUserEmail() {
-        return userEmail;
-    }
-
-    public void setUserEmail(String userEmail) {
-        this.userEmail = userEmail;
+    public void setJobPosting(JobPosting jobPosting) {
+        this.jobPosting = jobPosting;
     }
 
     public String getStatus() {
@@ -54,5 +52,13 @@ public class Application {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public Date getAppliedAt() {
+        return appliedAt;
+    }
+
+    public void setAppliedAt(Date appliedAt) {
+        this.appliedAt = appliedAt;
     }
 }

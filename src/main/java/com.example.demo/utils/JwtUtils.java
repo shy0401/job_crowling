@@ -15,48 +15,42 @@ public class JwtUtils {
 
     private final SecretKey key;
 
-    @Value("${jwt.expiration:86400000}") // 기본값 설정
+    @Value("${jwt.expiration:86400000}") // 기본 만료 시간: 1일
     private long jwtExpirationMs;
 
     public JwtUtils(@Value("${jwt.secret:defaultsecretkey}") String encodedKey) {
         this.key = createKey(encodedKey);
     }
 
-    // 키 생성 로직을 별도로 분리
+    // 비밀키 생성
     private SecretKey createKey(String encodedKey) {
         try {
             if (encodedKey == null || encodedKey.isEmpty()) {
                 throw new IllegalArgumentException("Encoded key is null or empty");
             }
 
-            // Base64 디코딩
             byte[] decodedKey = Base64.getDecoder().decode(encodedKey);
 
-            // 디코딩된 키 길이 확인 (256비트 이상이어야 함)
-            if (decodedKey.length < 32) { // 32바이트 = 256비트
+            if (decodedKey.length < 32) { // 32바이트 이상이어야 HS256 또는 HS512에 적합
                 throw new IllegalArgumentException("Key length is less than 256 bits");
             }
 
             return Keys.hmacShaKeyFor(decodedKey);
         } catch (Exception e) {
-            // 예외 발생 시 기본 키 반환
+            // 기본 키 생성 (보안성을 보장하기 위해 Key 생성 실패 시 예외를 기록)
+            System.err.println("Key creation failed, using default key: " + e.getMessage());
             return Keys.secretKeyFor(SignatureAlgorithm.HS512);
         }
     }
 
     // JWT 토큰 생성
     public String generateToken(String username) {
-        try {
-            return Jwts.builder()
-                    .setSubject(username)
-                    .setIssuedAt(new Date())
-                    .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
-                    .signWith(key, SignatureAlgorithm.HS512)
-                    .compact();
-        } catch (Exception e) {
-            // 예외 발생 시 null 반환
-            return null;
-        }
+        return Jwts.builder()
+                .setSubject(username)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
+                .signWith(key, SignatureAlgorithm.HS512)
+                .compact();
     }
 
     // JWT에서 사용자 이름 추출
@@ -69,7 +63,7 @@ public class JwtUtils {
                     .getBody()
                     .getSubject();
         } catch (JwtException e) {
-            // 예외 발생 시 null 반환
+            System.err.println("Failed to extract username: " + e.getMessage());
             return null;
         }
     }
@@ -79,12 +73,13 @@ public class JwtUtils {
         try {
             String username = extractUsername(token);
             return username != null && username.equals(userDetails.getUsername()) && !isTokenExpired(token);
-        } catch (Exception e) {
+        } catch (JwtException e) {
+            System.err.println("Token validation failed: " + e.getMessage());
             return false;
         }
     }
 
-    // JWT 만료 여부 확인
+    // 토큰의 만료 여부 확인
     private boolean isTokenExpired(String token) {
         try {
             return Jwts.parserBuilder()
@@ -95,7 +90,8 @@ public class JwtUtils {
                     .getExpiration()
                     .before(new Date());
         } catch (JwtException e) {
-            return false;
+            System.err.println("Token expiration check failed: " + e.getMessage());
+            return true; // 기본적으로 만료된 것으로 간주
         }
     }
 }
