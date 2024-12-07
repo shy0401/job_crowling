@@ -1,8 +1,8 @@
 package com.example.demo.services;
 
+import com.example.demo.config.JwtConfig;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -10,18 +10,18 @@ import java.util.Date;
 @Service
 public class JwtService {
 
-    @Value("${jwt.secret}")
-    private String secret;
+    private final JwtConfig jwtConfig;
 
-    @Value("${jwt.expiration.time}")
-    private long expirationTime;
+    public JwtService(JwtConfig jwtConfig) {
+        this.jwtConfig = jwtConfig;
+    }
 
     public String generateToken(String subject) {
         return Jwts.builder()
                 .setSubject(subject)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
-                .signWith(SignatureAlgorithm.HS512, secret)
+                .setExpiration(new Date(System.currentTimeMillis() + jwtConfig.getExpirationTime()))
+                .signWith(SignatureAlgorithm.HS512, jwtConfig.getSecret())
                 .compact();
     }
 }
