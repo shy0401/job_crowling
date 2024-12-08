@@ -22,28 +22,15 @@ public class JwtUtils {
         this.key = createKey(encodedKey);
     }
 
-    // 비밀키 생성
     private SecretKey createKey(String encodedKey) {
         try {
-            if (encodedKey == null || encodedKey.isEmpty()) {
-                throw new IllegalArgumentException("Encoded key is null or empty");
-            }
-
             byte[] decodedKey = Base64.getDecoder().decode(encodedKey);
-
-            if (decodedKey.length < 32) { // 32바이트 이상이어야 HS256 또는 HS512에 적합
-                throw new IllegalArgumentException("Key length is less than 256 bits");
-            }
-
             return Keys.hmacShaKeyFor(decodedKey);
-        } catch (Exception e) {
-            // 기본 키 생성 (보안성을 보장하기 위해 Key 생성 실패 시 예외를 기록)
-            System.err.println("Key creation failed, using default key: " + e.getMessage());
-            return Keys.secretKeyFor(SignatureAlgorithm.HS512);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalStateException("JWT 키 생성 실패: 환경 변수 또는 설정 파일의 키를 확인하세요.", e);
         }
     }
 
-    // JWT 토큰 생성
     public String generateToken(String username) {
         return Jwts.builder()
                 .setSubject(username)
@@ -53,45 +40,55 @@ public class JwtUtils {
                 .compact();
     }
 
-    // JWT에서 사용자 이름 추출
-    public String extractUsername(String token) {
-        try {
-            return Jwts.parserBuilder()
-                    .setSigningKey(key)
-                    .build()
-                    .parseClaimsJws(token)
-                    .getBody()
-                    .getSubject();
-        } catch (JwtException e) {
-            System.err.println("Failed to extract username: " + e.getMessage());
-            return null;
-        }
+    public String generateRefreshToken(String email) {
+        // Refresh 토큰 유효 기간 (7일)
+        long refreshTokenExpirationMs = 7 * 24 * 60 * 60 * 1000;
+        return Jwts.builder()
+                .setSubject(email)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + refreshTokenExpirationMs))
+                .signWith(key, SignatureAlgorithm.HS512)
+                .compact();
     }
 
-    // JWT 토큰 유효성 검사
+    public String extractUsername(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .getSubject();
+    }
+
     public boolean validateToken(String token, UserDetails userDetails) {
         try {
             String username = extractUsername(token);
-            return username != null && username.equals(userDetails.getUsername()) && !isTokenExpired(token);
+            return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
         } catch (JwtException e) {
-            System.err.println("Token validation failed: " + e.getMessage());
             return false;
         }
     }
 
-    // 토큰의 만료 여부 확인
-    private boolean isTokenExpired(String token) {
+    public boolean validateRefreshToken(String refreshToken) {
         try {
-            return Jwts.parserBuilder()
+            Jwts.parserBuilder()
                     .setSigningKey(key)
                     .build()
-                    .parseClaimsJws(token)
-                    .getBody()
-                    .getExpiration()
-                    .before(new Date());
+                    .parseClaimsJws(refreshToken);
+            return true;
         } catch (JwtException e) {
-            System.err.println("Token expiration check failed: " + e.getMessage());
-            return true; // 기본적으로 만료된 것으로 간주
+            return false;
         }
     }
+
+    private boolean isTokenExpired(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .getExpiration()
+                .before(new Date());
+    }
 }
+

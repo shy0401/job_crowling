@@ -1,11 +1,13 @@
 package com.example.demo.middleware;
 
 import com.example.demo.utils.JwtUtils;
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -33,32 +35,45 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String authHeader = request.getHeader("Authorization");
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+
             try {
-                String token = authHeader.substring(7);
                 String username = jwtUtils.extractUsername(token);
 
                 if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                    UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-
-                    if (jwtUtils.validateToken(token, userDetails)) {
-                        var authToken = new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
-                                userDetails, null, userDetails.getAuthorities());
-                        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                        SecurityContextHolder.getContext().setAuthentication(authToken);
-                    }
+                    processAuthentication(username, token, request);
                 }
+            } catch (ExpiredJwtException ex) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json");
+                response.getWriter().write("{\"error\": \"Token expired\", \"message\": \"Access token expired. Please use refresh token to get a new one.\"}");
+                return;
             } catch (Exception ex) {
-                handleUnauthorizedException(response, ex);
-                return; // Unauthorized response sent, stop filter chain
+                sendUnauthorizedResponse(response, ex.getMessage());
+                return;
             }
         }
 
         filterChain.doFilter(request, response);
     }
 
-    private void handleUnauthorizedException(HttpServletResponse response, Exception ex) throws IOException {
+
+    private void processAuthentication(String username, String token, HttpServletRequest request) {
+        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+        if (jwtUtils.validateToken(token, userDetails)) {
+            UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                    userDetails, null, userDetails.getAuthorities());
+            authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+            SecurityContextHolder.getContext().setAuthentication(authToken);
+        }
+    }
+
+    private void sendUnauthorizedResponse(HttpServletResponse response, String errorMessage) throws IOException {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType("application/json");
-        response.getWriter().write(String.format("{\"error\": \"Unauthorized\", \"message\": \"%s\"}", ex.getMessage()));
+        response.getWriter().write(String.format("{\"error\": \"Unauthorized\", \"message\": \"%s\"}", errorMessage));
     }
 }
+

@@ -27,6 +27,16 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Application> applications = new ArrayList<>();
 
+    public User() {
+        // 기본 생성자
+    }
+
+    public User(String email, String hashedPassword, String name) {
+        this.email = email;
+        this.password = hashedPassword;
+        this.name = name;
+    }
+
     // Getter & Setter
     public Long getId() {
         return id;

@@ -28,16 +28,15 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable())
+                // CSRF 비활성화
+                .csrf().disable()
+                // 인증 및 권한 설정
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/register", "/auth/login", "/login", "/error").permitAll()
-                        .anyRequest().authenticated()
+                        .requestMatchers("/auth/register", "/auth/login", "/auth/refresh","/jobs/**","/applications/**","/boookmarks/**","/jobpostings/**").permitAll() // 인증 없이 접근 허용
+                        //.requestMatchers().authenticated() // 인증 필요
+                        .anyRequest().authenticated() // 기타 요청 인증 필요
                 )
-                .logout(logout -> logout
-                        .logoutUrl("/logout")
-                        .invalidateHttpSession(true)
-                        .deleteCookies("JSESSIONID")
-                )
+                // JWT 필터 추가
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

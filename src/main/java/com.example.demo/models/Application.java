@@ -16,8 +16,8 @@ public class Application {
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "job_posting_id", nullable = false)
-    private JobPosting jobPosting;
+    @JoinColumn(name = "job_id", nullable = false) // `Job` 테이블과 매핑
+    private Job job;
 
     @Column(nullable = false)
     private String status = "지원 완료";
@@ -25,7 +25,20 @@ public class Application {
     @Temporal(TemporalType.TIMESTAMP)
     private Date appliedAt = new Date();
 
-    // Getter & Setter
+    @Column(columnDefinition = "TEXT", nullable = true)
+    private String resume;
+
+    // 기본 생성자
+    public Application() {}
+
+    // 사용자 정의 생성자
+    public Application(User user, Job job, String resume) {
+        this.user = user;
+        this.job = job;
+        this.resume = resume;
+    }
+
+    // Getters and Setters
     public Long getId() {
         return id;
     }
@@ -38,12 +51,12 @@ public class Application {
         this.user = user;
     }
 
-    public JobPosting getJobPosting() {
-        return jobPosting;
+    public Job getJob() {
+        return job;
     }
 
-    public void setJobPosting(JobPosting jobPosting) {
-        this.jobPosting = jobPosting;
+    public void setJob(Job job) {
+        this.job = job;
     }
 
     public String getStatus() {
@@ -60,5 +73,13 @@ public class Application {
 
     public void setAppliedAt(Date appliedAt) {
         this.appliedAt = appliedAt;
+    }
+
+    public String getResume() {
+        return resume;
+    }
+
+    public void setResume(String resume) {
+        this.resume = resume;
     }
 }

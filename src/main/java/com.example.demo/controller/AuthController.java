@@ -8,11 +8,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.stereotype.Controller;
+
 import java.util.Map;
 import java.util.Optional;
 
-@Controller  // Controller로 수정하여 HTML 페이지를 렌더링
+@RestController
 @RequestMapping("/auth")
 public class AuthController {
 
@@ -26,17 +26,12 @@ public class AuthController {
         this.jwtUtils = jwtUtils;
     }
 
-    // 회원가입 페이지 (GET)
-    @GetMapping("/register")
-    public String showRegisterPage() {
-        return "register";  // register.html을 렌더링
-    }
-
     // 회원가입 처리 (POST)
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@RequestParam String email,
-                                          @RequestParam String password,
-                                          @RequestParam String name) {
+    public ResponseEntity<?> registerUser(@RequestBody Map<String, String> userDetails) {
+        String email = userDetails.get("email");
+        String password = userDetails.get("password");
+        String name = userDetails.get("name");
 
         if (email == null || email.isBlank() || password == null || password.isBlank() || name == null || name.isBlank()) {
             return ResponseEntity.badRequest().body("모든 필드를 입력해주세요.");
@@ -47,21 +42,24 @@ public class AuthController {
         }
 
         String hashedPassword = passwordEncoder.encode(password);
-        User newUser = new User();
-        newUser.setEmail(email);
-        newUser.setPassword(hashedPassword);
-        newUser.setName(name);
-
+        User newUser = new User(email, hashedPassword, name);
         userService.save(newUser);
 
         return ResponseEntity.status(HttpStatus.CREATED).body("회원가입이 완료되었습니다.");
     }
 
-    // 로그인 처리
+
+    // 로그인 처리 (POST)
+// 로그인 처리 (POST)
     @PostMapping("/login")
-    public ResponseEntity<?> loginUser(@RequestParam String email,
-                                       @RequestParam String password) {
-        // 이메일과 비밀번호 검증
+    public ResponseEntity<?> loginUser(@RequestBody Map<String, String> loginDetails) {
+        String email = loginDetails.get("email");
+        String password = loginDetails.get("password");
+
+        if (email == null || email.isBlank() || password == null || password.isBlank()) {
+            return ResponseEntity.badRequest().body("이메일과 비밀번호를 모두 입력해주세요.");
+        }
+
         Optional<User> userOptional = userService.findByEmail(email);
         if (userOptional.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("이메일 또는 비밀번호가 일치하지 않습니다.");
@@ -72,14 +70,35 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("이메일 또는 비밀번호가 일치하지 않습니다.");
         }
 
-        String token = jwtUtils.generateToken(user.getEmail());
-        return ResponseEntity.ok(Map.of("accessToken", token));
+        String accessToken = jwtUtils.generateToken(user.getEmail());
+        String refreshToken = jwtUtils.generateRefreshToken(user.getEmail());
+
+        return ResponseEntity.ok(Map.of(
+                "message", "로그인이 성공적으로 완료되었습니다.",
+                "accessToken", accessToken,
+                "refreshToken", refreshToken
+        ));
     }
 
 
-    // 회원 정보 조회
-// AuthController.java
+    // 토큰 갱신 (POST)
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refreshAccessToken(@RequestHeader("Authorization") String refreshToken) {
+        try {
+            if (!jwtUtils.validateRefreshToken(refreshToken)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("유효하지 않은 토큰입니다.");
+            }
 
+            String email = jwtUtils.extractUsername(refreshToken);
+            String newAccessToken = jwtUtils.generateToken(email);
+
+            return ResponseEntity.ok(Map.of("accessToken", newAccessToken));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("토큰 재발급 실패");
+        }
+    }
+
+    // 회원 정보 조회
     @GetMapping("/profile")
     public ResponseEntity<?> getProfile(Authentication authentication) {
         String email = authentication.getName();
@@ -95,22 +114,6 @@ public class AuthController {
                 "email", user.getEmail(),
                 "name", user.getName()
         ));
-    }
-
-
-    @DeleteMapping("/deleteAccount")
-    public ResponseEntity<?> deleteAccount(Authentication authentication) {
-        String email = authentication.getName();
-        Optional<User> userOptional = userService.findByEmail(email);
-
-        if (userOptional.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("사용자를 찾을 수 없습니다.");
-        }
-
-        User user = userOptional.get();
-        userService.deleteUser(user.getId()); // 사용자 삭제
-
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).body("회원 탈퇴가 완료되었습니다.");
     }
 
     // 회원 정보 수정
@@ -137,5 +140,21 @@ public class AuthController {
 
         userService.save(user);
         return ResponseEntity.ok("회원 정보가 수정되었습니다.");
+    }
+
+    // 회원 탈퇴 처리
+    @DeleteMapping("/deleteAccount")
+    public ResponseEntity<?> deleteAccount(Authentication authentication) {
+        String email = authentication.getName();
+        Optional<User> userOptional = userService.findByEmail(email);
+
+        if (userOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("사용자를 찾을 수 없습니다.");
+        }
+
+        User user = userOptional.get();
+        userService.deleteUser(user.getId());
+
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).body("회원 탈퇴가 완료되었습니다.");
     }
 }

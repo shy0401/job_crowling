@@ -1,65 +1,62 @@
 package com.example.demo.services;
 
 import com.example.demo.models.Job;
+import com.example.demo.models.JobPosting;
 import com.example.demo.repositories.JobRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import java.util.Optional;
 
 @Service
 public class JobService {
 
-    @Autowired
-    private JobRepository jobRepository;
+    private final JobRepository jobRepository;
 
-    public List<Job> getJobs(int page, int limit, String search, String location, String experience, String sort) {
-        return jobRepository.findAll();
+    @Autowired
+    public JobService(JobRepository jobRepository) {
+        this.jobRepository = jobRepository;
+    }
+
+    public Page<Job> getFilteredAndSortedJobs(String filter, PageRequest pageRequest) {
+        if (filter == null || filter.isBlank()) {
+            return jobRepository.findAll(pageRequest);
+        }
+        return jobRepository.findByLocationContainingOrExperienceContainingOrCompanyContainingOrTitleContaining(
+                filter, filter, filter, filter, pageRequest);
     }
 
     public Job getJobById(Long id) {
-        return jobRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Job not found"));
+        return jobRepository.findById(id).orElse(null);
     }
 
-    public void createJob(Job job) {
-        if (job.getTitle() == null || job.getTitle().isEmpty()) {
-            throw new IllegalArgumentException("Job title is required");
-        }
-
-        if (job.getDescription() == null || job.getDescription().isEmpty()) {
-            throw new IllegalArgumentException("Job description is required");
-        }
-
-        if (job.getLocation() == null || job.getLocation().isEmpty()) {
-            throw new IllegalArgumentException("Location is required");
-        }
-
-        boolean isDuplicate = jobRepository.existsByTitleAndLocation(job.getTitle(), job.getLocation());
-        if (isDuplicate) {
-            throw new IllegalArgumentException("A job with the same title and location already exists");
-        }
-
-        jobRepository.save(job);
+    public Job saveJob(Job job) {
+        return jobRepository.save(job);
     }
 
-    public void updateJob(Long id, Job job) {
-        Job existingJob = jobRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Job not found"));
-
-        existingJob.setTitle(job.getTitle());
-        existingJob.setDescription(job.getDescription());
-        existingJob.setLocation(job.getLocation());
-        existingJob.setExperience(job.getExperience());
-        existingJob.setCompany(job.getCompany());
-
-        jobRepository.save(existingJob);
+    public Job updateJob(Long id, Job updatedJob) {
+        return jobRepository.findById(id).map(existingJob -> {
+            if (updatedJob.getTitle() != null) existingJob.setTitle(updatedJob.getTitle());
+            if (updatedJob.getCompany() != null) existingJob.setCompany(updatedJob.getCompany());
+            if (updatedJob.getLocation() != null) existingJob.setLocation(updatedJob.getLocation());
+            if (updatedJob.getExperience() != null) existingJob.setExperience(updatedJob.getExperience());
+            if (updatedJob.getEducation() != null) existingJob.setEducation(updatedJob.getEducation());
+            if (updatedJob.getEmploymentType() != null) existingJob.setEmploymentType(updatedJob.getEmploymentType());
+            return jobRepository.save(existingJob);
+        }).orElse(null);
     }
 
-    public void deleteJob(Long id) {
-        if (!jobRepository.existsById(id)) {
-            throw new RuntimeException("Job not found");
+    public boolean deleteJob(Long id) {
+        if (jobRepository.existsById(id)) {
+            jobRepository.deleteById(id);
+            return true;
         }
-        jobRepository.deleteById(id);
+        return false;
+    }
+
+    public Optional<Job> findById(Long id) {
+        return jobRepository.findById(id);
     }
 }

@@ -1,23 +1,26 @@
 package com.example.demo.models;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 
 @Entity
+@Table(name = "jobs")
 public class Job {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
+    private String company;
+
+    @Column(nullable = false)
     private String title;
-    private String description;
+
     private String location;
     private String experience;
-    private String company;
-    private double salary;
+    private String education;
+    private String employmentType;
+    private String link;
 
     // Getters and Setters
     public Long getId() {
@@ -28,20 +31,20 @@ public class Job {
         this.id = id;
     }
 
+    public String getCompany() {
+        return company;
+    }
+
+    public void setCompany(String company) {
+        this.company = company;
+    }
+
     public String getTitle() {
         return title;
     }
 
     public void setTitle(String title) {
         this.title = title;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
     }
 
     public String getLocation() {
@@ -60,19 +63,27 @@ public class Job {
         this.experience = experience;
     }
 
-    public String getCompany() {
-        return company;
+    public String getEducation() {
+        return education;
     }
 
-    public void setCompany(String company) {
-        this.company = company;
+    public void setEducation(String education) {
+        this.education = education;
     }
 
-    public double getSalary() {
-        return salary;
+    public String getEmploymentType() {
+        return employmentType;
     }
 
-    public void setSalary(double salary) {
-        this.salary = salary;
+    public void setEmploymentType(String employmentType) {
+        this.employmentType = employmentType;
+    }
+
+    public String getLink() {
+        return link;
+    }
+
+    public void setLink(String link) {
+        this.link = link;
     }
 }
