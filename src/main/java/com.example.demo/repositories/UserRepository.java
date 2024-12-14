@@ -12,4 +12,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     // 이메일 존재 여부 확인
     boolean existsByEmail(String email);
+
+    Optional<User> findByRefreshToken(String refreshToken); // Refresh Token 기반 조회
 }

@@ -16,26 +16,40 @@ public class Application {
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "job_id", nullable = false) // `Job` 테이블과 매핑
+    @JoinColumn(name = "job_id", nullable = false)
     private Job job;
 
     @Column(nullable = false)
-    private String status = "지원 완료";
+    private String status;  // 지원 상태 (예: Pending, Cancelled)
 
     @Temporal(TemporalType.TIMESTAMP)
-    private Date appliedAt = new Date();
+    @Column(nullable = false, updatable = false)
+    private Date appliedAt;  // 지원 날짜
 
-    @Column(columnDefinition = "TEXT", nullable = true)
-    private String resume;
+    @Column(columnDefinition = "TEXT")
+    private String resume;  // 이력서 내용
 
     // 기본 생성자
-    public Application() {}
+    public Application() {
+        this.status = "Pending"; // 기본 상태
+        this.appliedAt = new Date(); // 기본 지원 날짜
+    }
 
     // 사용자 정의 생성자
     public Application(User user, Job job, String resume) {
         this.user = user;
         this.job = job;
         this.resume = resume;
+        this.status = "Pending";
+        this.appliedAt = new Date();
+    }
+
+    public Application(User user, Job job, String resume, String status) {
+        this.user = user;
+        this.job = job;
+        this.resume = resume;
+        this.status = status;
+        this.appliedAt = new Date();
     }
 
     // Getters and Setters

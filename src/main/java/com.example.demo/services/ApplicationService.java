@@ -7,6 +7,7 @@ import com.example.demo.repositories.ApplicationRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -22,18 +23,17 @@ public class ApplicationService {
         this.applicationRepository = applicationRepository;
     }
 
-    // 사용자에 대한 전체 지원 내역 조회
+    // 전체 지원 내역 조회 (페이징 없음)
     public List<Application> getApplications(User user) {
-        // Pageable 없이 전체 리스트 조회
         return applicationRepository.findByUser(user, Pageable.unpaged()).getContent();
     }
 
-    // 사용자와 채용 공고로 지원 여부 확인
+    // 특정 사용자와 채용 공고에 대한 지원 내역 확인
     public Optional<Application> findByUserAndJob(Long userId, Long jobId) {
         return applicationRepository.findByUserIdAndJobId(userId, jobId);
     }
 
-    // 채용 공고에 지원
+    // 지원 정보 저장
     public void applyForJob(Application application) {
         applicationRepository.save(application);
     }
@@ -48,7 +48,7 @@ public class ApplicationService {
         return false;
     }
 
-    // 이미 지원 여부 확인
+    // 중복 지원 확인
     public boolean checkIfAlreadyApplied(Long userId, Long jobId) {
         return applicationRepository.findByUserIdAndJobId(userId, jobId).isPresent();
     }
@@ -59,22 +59,45 @@ public class ApplicationService {
 
         if (status.isPresent()) {
             Page<Application> filteredApplications = applicationRepository.findByUserAndStatus(user, status.get(), pageable);
-            return filteredApplications.map(application -> Map.of(
-                    "id", application.getId(),
-                    "job", application.getJob(),
-                    "status", application.getStatus(),
-                    "resume", application.getResume(),
-                    "appliedAt", application.getAppliedAt()
-            ));
+            return mapApplications(filteredApplications);
         }
 
         Page<Application> applications = applicationRepository.findByUser(user, pageable);
+        return mapApplications(applications);
+    }
+
+    // 지원 내역 조회 결과 매핑
+    private Page<Map<String, Object>> mapApplications(Page<Application> applications) {
         return applications.map(application -> Map.of(
                 "id", application.getId(),
-                "job", application.getJob(),
+                "job", Map.of(
+                        "id", application.getJob().getId(),
+                        "title", application.getJob().getTitle()
+                ),
                 "status", application.getStatus(),
                 "resume", application.getResume(),
                 "appliedAt", application.getAppliedAt()
         ));
+    }
+
+    // 지원 내역 저장
+    public void save(Application application) {
+        applicationRepository.save(application);
+    }
+
+    // 필터를 적용한 지원 내역 조회
+    public Page<Application> getApplicationsWithFilters(User user, Optional<String> status, String sortBy, String sortDirection, int page, int size) {
+        Sort sort = sortDirection.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
+        PageRequest pageRequest = PageRequest.of(page - 1, size, sort);
+
+        if (status.isPresent()) {
+            return applicationRepository.findAllByUserAndStatus(user, status.get(), pageRequest);
+        } else {
+            return applicationRepository.findAllByUser(user, pageRequest);
+        }
+    }
+
+    public Optional<Application> findById(Long id) {
+        return applicationRepository.findById(id);
     }
 }

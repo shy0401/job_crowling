@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "users")
+@Table(name = "Users")
 public class User {
 
     @Id
@@ -26,15 +26,19 @@ public class User {
     // 사용자와 연관된 지원 내역
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Application> applications = new ArrayList<>();
-
-    public User() {
-        // 기본 생성자
-    }
+    private String refreshToken;
 
     public User(String email, String hashedPassword, String name) {
         this.email = email;
         this.password = hashedPassword;
         this.name = name;
+    }
+
+    public User() {
+
+    }
+
+    public User(String email, String encodedPassword) {
     }
 
     // Getter & Setter
@@ -77,5 +81,12 @@ public class User {
     // 비밀번호 검증
     public boolean checkPassword(String rawPassword, BCryptPasswordEncoder encoder) {
         return encoder.matches(rawPassword, this.password);
+    }
+    public void setRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
+    }
+
+    public String getRefreshToken() {
+        return refreshToken;
     }
 }
