@@ -89,20 +89,8 @@ http://113.198.66.75:10099/applications
 <accessToken> 그대로
 
 -> 
-{
-    "data": [
-        {
-            "job": {
-                "id": 12,
-                "company": "(주)꿈선생",
-                "title": "[DealMakers] BE, Python Software Engineer 모집",
-                "location": "부산 남구",
-                "experience": "경력무관",
-                "education": "학력무관",
-                "employmentType": "정규직",
-"link":"https://www.saramin.co.kr/zf_user/jobs/relay/view?view_type=search&rec_idx=49535457&location=ts&searchword=python&searchType=search&paid_fl=n&search_uuid=84b48581-1804-42b9-80a6-ef394b8a0971",
-                "hibernateLazyInitializer"
-            }
+![image](https://github.com/user-attachments/assets/62d3f408-14d7-425a-b68e-491059a21faf)
+
 --------------------------------------
 (GET /jobs)
 http://113.198.66.75:10099/jobs
