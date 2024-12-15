@@ -1,6 +1,3 @@
-
-
-<api들 사용하는 법 - POSTMAN>
 <회원가입 : POST> </auth/register>
 http://113.198.66.75:10099/auth/register
 
@@ -91,7 +88,7 @@ http://113.198.66.75:10099/applications
 http://113.198.66.75:10099/applications
 <accessToken> 그대로
 
-->
+-> 
 {
     "data": [
         {
