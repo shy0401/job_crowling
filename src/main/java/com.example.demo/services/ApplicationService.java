@@ -81,8 +81,9 @@ public class ApplicationService {
     }
 
     // 지원 내역 저장
-    public void save(Application application) {
+    public Application save(Application application) {
         applicationRepository.save(application);
+        return application;
     }
 
     // 필터를 적용한 지원 내역 조회
@@ -100,4 +101,22 @@ public class ApplicationService {
     public Optional<Application> findById(Long id) {
         return applicationRepository.findById(id);
     }
+
+    public Application applyForJob(User user, Job job, String resume) {
+        // 중복 지원 확인
+        if (checkIfAlreadyApplied(user.getId(), job.getId())) {
+            throw new IllegalStateException("이미 해당 채용 공고에 지원하셨습니다.");
+        }
+
+        // 새로운 Application 생성
+        Application application = new Application();
+        application.setUser(user);
+        application.setJob(job);
+        application.setResume(resume);
+        application.setStatus("Pending"); // 기본 상태 설정
+
+        // 데이터 저장
+        return save(application);
+    }
+
 }

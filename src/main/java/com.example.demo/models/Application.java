@@ -1,7 +1,7 @@
 package com.example.demo.models;
 
 import jakarta.persistence.*;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "applications")
@@ -20,36 +20,26 @@ public class Application {
     private Job job;
 
     @Column(nullable = false)
-    private String status;  // 지원 상태 (예: Pending, Cancelled)
+    private String status = "Pending";
 
-    @Temporal(TemporalType.TIMESTAMP)
     @Column(nullable = false, updatable = false)
-    private Date appliedAt;  // 지원 날짜
+    private LocalDateTime appliedAt;
 
     @Column(columnDefinition = "TEXT")
-    private String resume;  // 이력서 내용
+    private String resume;
 
-    // 기본 생성자
-    public Application() {
-        this.status = "Pending"; // 기본 상태
-        this.appliedAt = new Date(); // 기본 지원 날짜
-    }
+    public Application() {}
 
-    // 사용자 정의 생성자
     public Application(User user, Job job, String resume) {
         this.user = user;
         this.job = job;
         this.resume = resume;
         this.status = "Pending";
-        this.appliedAt = new Date();
     }
 
-    public Application(User user, Job job, String resume, String status) {
-        this.user = user;
-        this.job = job;
-        this.resume = resume;
-        this.status = status;
-        this.appliedAt = new Date();
+    @PrePersist
+    protected void onCreate() {
+        this.appliedAt = LocalDateTime.now();
     }
 
     // Getters and Setters
@@ -81,12 +71,8 @@ public class Application {
         this.status = status;
     }
 
-    public Date getAppliedAt() {
+    public LocalDateTime getAppliedAt() {
         return appliedAt;
-    }
-
-    public void setAppliedAt(Date appliedAt) {
-        this.appliedAt = appliedAt;
     }
 
     public String getResume() {

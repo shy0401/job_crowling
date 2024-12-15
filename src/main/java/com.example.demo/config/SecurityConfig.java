@@ -32,8 +32,8 @@ public class SecurityConfig {
                 .csrf().disable()
                 // 인증 및 권한 설정
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/register","/auth/profile", "/auth/login", "/auth/refresh","/jobs/**","/applications/**","/boookmarks/**","/jobpostings/**").permitAll() // 인증 없이 접근 허용
-                        //.requestMatchers().authenticated() // 인증 필요
+                        .requestMatchers("/auth/register","/auth/profile", "/auth/login", "/swagger-ui/**").permitAll() // 인증 없이 접근 허용
+                        .requestMatchers("/auth/refresh","/jobs/**","/applications/**","/boookmarks/**","/jobpostings/**").authenticated() // 인증 필요
                         .anyRequest().authenticated() // 기타 요청 인증 필요
                 )
                 // JWT 필터 추가

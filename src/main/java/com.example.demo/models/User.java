@@ -1,5 +1,6 @@
 package com.example.demo.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
@@ -17,15 +18,17 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @JsonIgnore // 비밀번호는 JSON 응답에서 제외
     @Column(nullable = false)
     private String password;
 
     @Column(nullable = false)
     private String name;
 
-    // 사용자와 연관된 지원 내역
+    @JsonIgnore // 순환 참조 방지
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Application> applications = new ArrayList<>();
+
     private String refreshToken;
 
     public User(String email, String hashedPassword, String name) {
@@ -34,14 +37,8 @@ public class User {
         this.name = name;
     }
 
-    public User() {
+    public User() {}
 
-    }
-
-    public User(String email, String encodedPassword) {
-    }
-
-    // Getter & Setter
     public Long getId() {
         return id;
     }
@@ -78,10 +75,10 @@ public class User {
         this.applications = applications;
     }
 
-    // 비밀번호 검증
     public boolean checkPassword(String rawPassword, BCryptPasswordEncoder encoder) {
         return encoder.matches(rawPassword, this.password);
     }
+
     public void setRefreshToken(String refreshToken) {
         this.refreshToken = refreshToken;
     }
