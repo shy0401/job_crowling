@@ -1,3 +1,12 @@
+프로젝트 빌드하기
+npm install 실행
+
+job_crowling/src/main/java/com.example.demo/DemoApplication 실행
+
+-> http://localhost:8080/ 에서 postman을 통해 테스트 가능합니다.
+-> JCLOUD 서버를 통해 POSTMAN 테스트를 위해서는 아래 설명을 참고해주세요.
+
+
 <회원가입 : POST> </auth/register>
 http://113.198.66.75:10099/auth/register
 
