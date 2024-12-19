@@ -57,7 +57,7 @@ public class ResumeController {
         String userEmail = authentication.getName();
 
         User user = userService.findByEmail(userEmail).orElseThrow(() ->
-                new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                new IllegalArgumentException("사용자를 찾을 수 없습니다.."));
 
         Resume resume = resumeService.getResumeById(id).orElseThrow(() ->
                 new IllegalArgumentException("Resume not found"));
